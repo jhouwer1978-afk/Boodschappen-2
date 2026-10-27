@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Boodschappen</title>
+<meta name="theme-color" content="#1f7a4d">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{--g:#1f7a4d;--bg:#f3f5f1;--card:#fff;--mut:#8a9288;--line:#dde3d8}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Roboto,sans-serif;background:var(--bg);color:#222;padding-bottom:96px;font-size:16px;-webkit-font-smoothing:antialiased}
+header{background:linear-gradient(135deg,#1f7a4d,#2fa06a);color:#fff;padding:16px 18px 14px;position:sticky;top:0;z-index:5;box-shadow:0 2px 12px rgba(0,0,0,.12)}
+header h1{margin:0;font-size:21px;font-weight:700;letter-spacing:.01em}
+main{padding:14px 14px 0;max-width:600px;margin:auto}
+.lists{display:flex;gap:8px;margin-bottom:14px}
+.lists select{flex:1;min-width:0;font-size:16px;padding:11px 12px;border-radius:12px;border:1px solid #d3dacb;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.04);font-weight:600;color:#1d2a20}
+.lists button{border:0;background:#e6f2ea;color:var(--g);font-weight:600;border-radius:12px;padding:11px 12px;font-size:14px;white-space:nowrap}
+.add{display:flex;gap:8px;margin-bottom:10px}
+.add input{flex:1;min-width:0;font-size:17px;padding:13px 14px;border:1px solid #d3dacb;border-radius:14px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.add select{font-size:14px;padding:12px;border-radius:14px;border:1px solid #d3dacb;background:#fff;max-width:42%;color:#1d2a20}
+.add button{background:var(--g);color:#fff;border:0;border-radius:14px;padding:0 20px;font-size:26px;font-weight:300;box-shadow:0 2px 6px rgba(31,122,77,.3)}
+.lists select:focus,.add input:focus,.add select:focus{outline:none;border-color:#2fa06a;box-shadow:0 0 0 3px rgba(47,160,106,.18)}
+h2{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--g);margin:22px 2px 8px;letter-spacing:.08em}
+h2::after{content:"";flex:1;height:1px;background:#d3dacb;margin-left:6px}
+.mv{background:#fff;border:1px solid #d3dacb;border-radius:8px;color:var(--g);font-size:12px;padding:3px 8px;margin:0;line-height:1}
+.row{display:flex;align-items:center;gap:12px;background:#fff;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.06);padding:13px 14px;margin-bottom:8px}
+.row input[type=checkbox]{width:24px;height:24px;accent-color:var(--g);flex:none;border-radius:50%}
+.row .name{flex:1;font-size:17px;min-width:0;color:#1d2a20}
+.row select{font-size:12px;padding:6px 8px;border-radius:10px;border:1px solid #e1e6dc;background:#f8faf7;color:#556155;max-width:40%}
+.row .del{background:none;border:0;color:#c0c7bc;font-size:22px;width:32px;height:32px;padding:0;border-radius:50%;line-height:1}
+.row .del:hover{background:#fbeaea;color:#b33}
+.row.done{background:#f0f2ee;box-shadow:none;opacity:.6}
+.row.done .name{text-decoration:line-through;color:var(--mut)}
+details.bought{margin-top:26px}
+details.bought summary{font-size:12px;font-weight:700;color:var(--mut);letter-spacing:.08em;padding:8px 4px;cursor:pointer;list-style:none}
+details.bought summary::before{content:"▸ "}
+details.bought[open] summary::before{content:"▾ "}
+.empty{padding:50px 20px;color:var(--mut);text-align:center;font-size:15px}
+.bar{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-top:0;box-shadow:0 -2px 14px rgba(0,0,0,.08);padding:10px 12px calc(10px + env(safe-area-inset-bottom));display:flex;gap:8px;justify-content:center}
+.bar button{flex:1;max-width:130px;padding:12px 6px;border-radius:12px;border:0;background:#eef5f0;color:var(--g);font-size:14px;font-weight:600}
+.bar button.primary{background:var(--g);color:#fff;box-shadow:0 2px 8px rgba(31,122,77,.35)}
+.info{background:#fff;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.06);color:#6b7468;font-size:13px;padding:14px 16px;margin:22px 0 10px;line-height:1.5}
+.info strong{color:#1d2a20}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10}
+.modal[hidden]{display:none}
+.modal .box{background:#fff;border-radius:20px;padding:22px;max-width:380px;width:100%;text-align:center}
+.modal .box.wide{max-width:520px;max-height:88vh;overflow:auto;text-align:left}
+.modal h3{margin:14px 0 8px;color:var(--g);font-size:17px}
+.modal h3:first-child{margin-top:0}
+.modal #qr{display:flex;justify-content:center;min-height:220px;margin:8px 0}
+.modal #qrWarn{color:#b33;font-size:14px;min-height:18px}
+.modal input{width:100%;padding:10px;font-size:14px;margin:10px 0;border:1px solid #d3dacb;border-radius:12px;background:#f8faf7}
+.modal .btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.modal button{padding:10px 14px;border-radius:12px;border:0;background:#eef5f0;color:var(--g);font-size:15px;font-weight:600}
+.modal button.primary{background:var(--g);color:#fff}
+.mrow{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #eef1ea}
+.mrow span,.mrow .pn{flex:1;min-width:0;font-size:15px}
+.mrow input{flex:1;min-width:0;margin:0;padding:9px 10px}
+.mrow select{max-width:45%;font-size:13px;padding:7px;border-radius:10px;border:1px solid #d3dacb;background:#fff}
+.mrow button{padding:6px 10px;border-radius:10px;border:1px solid #d3dacb;background:#fff;color:#555;font-size:14px}
+.mrow button[data-pdel]{color:#b33}
+.hint{font-size:13px;color:var(--mut);margin:4px 0 10px}
+</style>
+</head>
+<body>
+<header><h1>🛒 Boodschappen</h1></header>
+<main>
+  <div class="lists">
+    <select id="listSel" aria-label="Kies lijst"></select>
+    <button id="newListBtn">+ Nieuw</button>
+    <button id="delListBtn">Verwijder</button>
+    <button id="mgrBtn" aria-label="Beheer categorieën en producten">⚙</button>
+  </div>
+  <div class="add">
+    <input id="name" placeholder="Wat moet erbij?" autocomplete="off">
+    <select id="cat" aria-label="Categorie"></select>
+    <button id="addBtn" aria-label="Toevoegen">+</button>
+  </div>
+  <div id="list"></div>
+  <div class="info" id="info"></div>
+</main>
+<div class="bar">
+  <button id="shareBtn">Deel</button>
+  <button id="qrBtn">Link / QR</button>
+  <button id="exportBtn">Export</button>
+  <button id="importBtn">Import</button>
+  <button id="doneBtn" class="primary">Klaar</button>
+</div>
+<input type="file" id="file" accept="application/json" hidden>
+
+<div class="modal" id="modal" hidden>
+  <div class="box">
+    <h3>Deel je lijst</h3>
+    <div id="qr"></div>
+    <div id="qrWarn"></div>
+    <input id="linkBox" readonly onclick="this.select()">
+    <div class="btns">
+      <button class="primary" id="copyLink">Kopieer link</button>
+      <button id="nativeShare">Deel via…</button>
+      <button id="closeModal">Sluit</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="mgr" hidden>
+  <div class="box wide">
+    <div id="mgrBody"></div>
+    <div class="btns" style="margin-top:16px"><button class="primary" id="mgrClose">Sluit</button></div>
+  </div>
+</div>
+
+<script>
+// Standaardvolgorde van categorieën (je kunt ze per lijst met ▲▼ verschuiven)
+const DEFAULT_CATS = ["Baby","Elektronica","Droge producten","Bakproducten","Snacks en snoep","Alcoholische producten","Blikjes en potjes","Koffie en thee","Persoonlijke verzorging","Vlees","Diepvries","Zuivel","Dranken","Gezondheid","Kruiden, sauzen en oliën","Vis","Overig","Fruit","Groenten","Schoonmaak en wasgoed","Kant-en-klaar maaltijden","Kleding","Huis en tuin"];
+
+// Trefwoorden: als een product niet in de database staat, raadt de app de categorie hiermee
+const KW = {
+  "Baby": ["luier","luiers","babyvoeding","babydoekjes","babyolie"],
+  "Elektronica": ["batterij","batterijen","lader","kabel","oplader"],
+  "Droge producten": ["pasta","rijst","noodles","linzen","bonen","soep","bouillon","ontbijtgranen","muesli","cornflakes"],
+  "Bakproducten": ["meel","bloem","suiker","bakpoeder","gist","bakmix","vanille","paneermeel","chocoladevlokken"],
+  "Snacks en snoep": ["chips","chocolade","snoep","koek","koeken","noten","popcorn","drop","chocola","reep"],
+  "Alcoholische producten": ["bier","wijn","jenever","whisky","wodka","rum","cider","prosecco"],
+  "Blikjes en potjes": ["conserven","blik","tomatenblokjes","kidneybonen","appelmoes","jam","pindakaas","honing","augurken"],
+  "Koffie en thee": ["koffie","thee","cappuccino","espresso"],
+  "Persoonlijke verzorging": ["shampoo","tandpasta","deodorant","scheerschuim","zeep","douchegel","tandenborstel","scheerapparaat"],
+  "Vlees": ["gehakt","kip","kipfilet","vlees","worst","worsten","spek","ham","salami","vleeswaren","rookworst","biefstuk"],
+  "Diepvries": ["diepvries","ijs","friet","frites","pizza","erwten","diepvriesgroente"],
+  "Zuivel": ["melk","yoghurt","boter","room","eieren","eier","kwark","vla","kaas","crème","karnemelk"],
+  "Dranken": ["water","sap","frisdrank","cola","limonade","fris","spa"],
+  "Gezondheid": ["pleisters","vitamines","paracetamol","medicijn","thermometer","pijnstiller"],
+  "Kruiden, sauzen en oliën": ["kruiden","zout","peper","azijn","saus","olie","olijfolie","mayonaise","ketchup","sojasaus","sambal"],
+  "Vis": ["vis","zalm","kabeljauw","garnaal","garnalen","tonijn"],
+  "Fruit": ["appel","appels","banaan","bananen","citroen","druiven","sinaasappel","sinaasappels","peer","peren","aardbeien"],
+  "Groenten": ["sla","tomaat","tomaten","komkommer","paprika","paprika's","ui","uien","wortel","wortels","aardappel","aardappelen","groente","champignon","champignons","prei","spinazie","broccoli","courgette"],
+  "Schoonmaak en wasgoed": ["schoonmaak","wc","afwas","vaatwas","vaatwastabletten","sop","allesreiniger","toiletpapier","keukenrol","sponzen","spons","vuilniszak","vuilniszakken","wasmiddel","reiniger","wasverzachter"],
+  "Kant-en-klaar maaltijden": ["lasagne","stamppot","maaltijdsalade","bami","nasi","hutspot","snert"],
+  "Kleding": ["sokken","ondergoed","t-shirt","broek","jas","kleding","trui"],
+  "Huis en tuin": ["bloempot","tuinaarde","kaarsen","gereedschap","lamp","tuinslang"]
+};
+
+// Oude categorienamen uit eerdere versies
+const OLD = {"Groente & fruit":"Groenten","Brood & gebak":"Bakproducten","Zuivel & eieren":"Zuivel","Kaas & vlees":"Vlees","Kruidenierswaren":"Droge producten","Drogisterij":"Persoonlijke verzorging","Schoonmaak":"Schoonmaak en wasgoed"};
+
+const KEY = 'boodschappen-v1';
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const keyOf = n => n.trim().toLowerCase();
+const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+// Data: { categories: [...], products: {sleutel: {name, cat}}, lists: [{id,name,items,trips,seq,catOrder}], active }
+function normalize(d){
+  if (!d || typeof d !== 'object') return null;
+  const isNew = Array.isArray(d.lists) && d.lists.length > 0;
+  if (!isNew && !Array.isArray(d.items)) return null;
+  const cats = Array.isArray(d.categories) && d.categories.length ? d.categories.slice() : DEFAULT_CATS.slice();
+  if (!cats.includes('Overig')) cats.push('Overig');
+  const fixCat = c => { const n = OLD[c] || c; return cats.includes(n) ? n : 'Overig'; };
+  const products = {};
+  for (const [k, p] of Object.entries(d.products || {})) products[k] = { name: p.name || k, cat: fixCat(p.cat) };
+  for (const [k, c] of Object.entries(d.catMemory || {})) if (!products[k]) products[k] = { name: k, cat: fixCat(c) };
+  const src = isNew ? d.lists : [{ id: null, name: 'Boodschappen', items: d.items, trips: d.trips, seq: d.seq }];
+  const lists = src.map(l => ({
+    id: l.id || newId(),
+    name: l.name || 'Lijst',
+    items: (l.items || []).map(i => ({ ...i, cat: fixCat(i.cat) })),
+    trips: l.trips || [],
+    seq: (l.seq || []).map(e => ({ ...e, c: fixCat(e.c) })),
+    catOrder: (l.catOrder || []).map(fixCat)
+  }));
+  return { categories: cats, products, lists, active: isNew ? d.active : null };
+}
+function fix(s){
+  s.active = s.lists.some(l => l.id === s.active) ? s.active : s.lists[0].id;
+  return s;
+}
+function load(){
+  try { const n = normalize(JSON.parse(localStorage.getItem(KEY))); if (n) return fix(n); } catch(e){}
+  return fix({ categories: DEFAULT_CATS.slice(), products: {}, lists: [{ id: newId(), name: 'Boodschappen', items: [], trips: [], seq: [], catOrder: [] }], active: null });
+}
+let S = load();
+let boughtOpen = true;
+let prodQuery = '';
+
+function save(){ localStorage.setItem(KEY, JSON.stringify(S)); }
+const cur = () => S.lists.find(l => l.id === S.active) || S.lists[0];
+const catOptions = sel => S.categories.map(c => `<option value="${esc(c)}" ${c === sel ? 'selected' : ''}>${esc(c)}</option>`).join('');
+
+// ---- Categorieën per lijst (volgorde) ----
+function getOrder(L){
+  L.catOrder = (L.catOrder || []).filter(c => S.categories.includes(c));
+  S.categories.forEach(c => { if (!L.catOrder.includes(c)) L.catOrder.push(c); });
+  return L.catOrder;
+}
+function moveCat(cat, dir){
+  const o = getOrder(cur());
+  const i = o.indexOf(cat), j = i + dir;
+  if (i < 0 || j < 0 || j >= o.length) return;
+  [o[i], o[j]] = [o[j], o[i]];
+  save(); render();
+}
+function renameCat(oldN, newN){
+  const idx = S.categories.indexOf(oldN);
+  if (idx < 0) return;
+  S.categories[idx] = newN;
+  S.lists.forEach(L => {
+    L.items.forEach(i => { if (i.cat === oldN) i.cat = newN; });
+    L.seq.forEach(e => { if (e.c === oldN) e.c = newN; });
+    L.catOrder = (L.catOrder || []).map(c => c === oldN ? newN : c);
+  });
+  Object.values(S.products).forEach(p => { if (p.cat === oldN) p.cat = newN; });
+}
+function deleteCat(c){
+  if (c === 'Overig') return;
+  S.categories = S.categories.filter(x => x !== c);
+  S.lists.forEach(L => {
+    L.items.forEach(i => { if (i.cat === c) i.cat = 'Overig'; });
+    L.seq.forEach(e => { if (e.c === c) e.c = 'Overig'; });
+    L.catOrder = (L.catOrder || []).filter(x => x !== c);
+  });
+  Object.values(S.products).forEach(p => { if (p.cat === c) p.cat = 'Overig'; });
+}
+
+// ---- Productdatabase ----
+function keywordCat(name){
+  const tokens = name.toLowerCase().split(/[\s,.\-/]+/).filter(Boolean);
+  for (const [cat, words] of Object.entries(KW))
+    if (S.categories.includes(cat) && tokens.some(t => words.includes(t))) return cat;
+  return null;
+}
+// Volgorde: database, dan trefwoorden, anders Overig
+function guess(name){
+  const p = S.products[keyOf(name)];
+  if (p && S.categories.includes(p.cat)) return p.cat;
+  return keywordCat(name) || 'Overig';
+}
+// Zet de categorie van een product: database + alle artikelen met die naam, in alle lijsten
+function setProductKey(k, cat){
+  const p = S.products[k] || { name: k, cat };
+  p.cat = cat;
+  S.products[k] = p;
+  S.lists.forEach(L => L.items.forEach(i => { if (keyOf(i.name) === k) i.cat = cat; }));
+}
+function setProduct(name, cat){
+  const k = keyOf(name);
+  if (!S.products[k]) S.products[k] = { name: name.trim(), cat };
+  setProductKey(k, cat);
+}
+
+// Leren: per winkelbezoek van deze lijst de volgorde van afvinken onthouden
+function stats(L){
+  const kp = {};
+  for (const t of L.trips){
+    const n = t.seq.length;
+    t.seq.forEach((e, i) => { (kp[e.k] ??= []).push(n > 1 ? i / (n - 1) : 0.5); });
+  }
+  return { kp: Object.fromEntries(Object.entries(kp).map(([k, v]) => [k, v.reduce((a, b) => a + b, 0) / v.length])) };
+}
+// Artikel-positie binnen een categorie: geleerd uit winkelbezoeken, anders midden
+const itemScore = (it, st) => st.kp[keyOf(it.name)] ?? 0.5;
+
+function routeSorted(L){
+  const st = stats(L);
+  const o = getOrder(L);
+  return [...L.items].sort((a, b) =>
+    o.indexOf(a.cat) - o.indexOf(b.cat) ||
+    itemScore(a, st) - itemScore(b, st) ||
+    a.name.localeCompare(b.name, 'nl'));
+}
+
+function rowHtml(it){
+  return `<div class="row ${it.done ? 'done' : ''}">
+    <input type="checkbox" data-id="${it.id}" ${it.done ? 'checked' : ''} aria-label="Afvinken">
+    <span class="name">${esc(it.name)}</span>
+    <select data-cid="${it.id}" aria-label="Categorie">${catOptions(it.cat)}</select>
+    <button class="del" data-del="${it.id}" aria-label="Verwijderen">×</button></div>`;
+}
+
+function renderListSel(){
+  document.getElementById('listSel').innerHTML =
+    S.lists.map(l => `<option value="${l.id}" ${l.id === S.active ? 'selected' : ''}>${esc(l.name)}</option>`).join('');
+}
+
+function render(){
+  const L = cur();
+  const sorted = routeSorted(L);
+  const open = sorted.filter(i => !i.done);
+  const bought = sorted.filter(i => i.done);
+  const list = document.getElementById('list');
+
+  renderListSel();
+  const cs = document.getElementById('cat');
+  const v = cs.value;
+  cs.innerHTML = catOptions(S.categories.includes(v) ? v : 'Overig');
+
+  if (!sorted.length){
+    list.innerHTML = '<div class="empty">Lijst is leeg. Voeg hierboven artikelen toe.</div>';
+  } else {
+    const order = getOrder(L);
+    let html = '', last = null;
+    for (const it of open){
+      if (it.cat !== last){
+        html += `<h2>${esc(it.cat)} <button class="mv" data-cat="${esc(it.cat)}" data-dir="-1" aria-label="Categorie omhoog">▲</button><button class="mv" data-cat="${esc(it.cat)}" data-dir="1" aria-label="Categorie omlaag">▼</button></h2>`;
+        last = it.cat;
+      }
+      html += rowHtml(it);
+    }
+    if (bought.length){
+      html += `<details class="bought" ${boughtOpen ? 'open' : ''}><summary>Gekocht (${bought.length})</summary>`;
+      html += bought.map(rowHtml).join('');
+      html += `</details>`;
+    }
+    list.innerHTML = html;
+    const d = list.querySelector('details.bought');
+    if (d) d.addEventListener('toggle', () => { boughtOpen = d.open; });
+  }
+
+  const cats = [...new Set(sorted.map(i => i.cat))];
+  document.getElementById('info').innerHTML =
+    `Lijst: <strong>${esc(L.name)}</strong> · ${L.trips.length} winkelbezoek(en) opgeslagen.<br>` +
+    (L.trips.length
+      ? `Huidige looproute: ${cats.map(esc).join(' → ')}`
+      : `Na het eerste bezoek leert de app de looproute van deze winkel.`);
+}
+
+function toggle(id){
+  const L = cur();
+  const it = L.items.find(i => i.id === id);
+  if (!it) return;
+  it.done = !it.done;
+  const k = keyOf(it.name);
+  if (it.done){
+    if (!L.seq.some(e => e.k === k)) L.seq.push({ k, c: it.cat });
+  } else {
+    L.seq = L.seq.filter(e => e.k !== k);
+  }
+  save(); render();
+}
+
+function addItem(){
+  const L = cur();
+  const input = document.getElementById('name');
+  const name = input.value.trim();
+  if (!name) return;
+  const cat = document.getElementById('cat').value;
+  if (!L.items.some(i => keyOf(i.name) === keyOf(name) && !i.done)){
+    L.items.push({ id: newId(), name, cat, done: false });
+  }
+  setProduct(name, cat);
+  input.value = '';
+  document.getElementById('cat').value = guess(name);
+  save(); render();
+  input.focus();
+}
+
+function finishTrip(){
+  const L = cur();
+  if (!L.seq.length) return alert('Vink eerst de artikelen af die je hebt gepakt.');
+  if (!confirm('Winkelbezoek opslaan? Afgevinkte artikelen verdwijnen van de lijst.')) return;
+  L.trips.push({ date: new Date().toISOString().slice(0, 10), seq: L.seq });
+  L.items = L.items.filter(i => !i.done);
+  L.seq = [];
+  save(); render();
+}
+
+// ---- Lijsten beheren ----
+function newList(){
+  const name = prompt('Naam van de nieuwe lijst (bijv. Dirk, Kruidvat, Etos):');
+  if (!name || !name.trim()) return;
+  const id = newId();
+  S.lists.push({ id, name: name.trim(), items: [], trips: [], seq: [], catOrder: [] });
+  S.active = id;
+  boughtOpen = true;
+  save(); render();
+}
+function deleteList(){
+  const L = cur();
+  if (!confirm(`Lijst "${L.name}" verwijderen? Ook de winkelbezoeken van deze lijst worden verwijderd.`)) return;
+  S.lists = S.lists.filter(l => l.id !== L.id);
+  if (!S.lists.length) S.lists.push({ id: newId(), name: 'Boodschappen', items: [], trips: [], seq: [], catOrder: [] });
+  S.active = S.lists[0].id;
+  save(); render();
+}
+
+// ---- Categorieën en productdatabase beheren ----
+function openMgr(){ renderMgr(); document.getElementById('mgr').hidden = false; }
+function renderMgr(){
+  document.getElementById('mgrBody').innerHTML = `
+    <h3>Categorieën</h3>
+    ${S.categories.map(c => `<div class="mrow"><span>${esc(c)}</span>
+      <button data-ren="${esc(c)}" aria-label="Hernoem">✎</button>
+      ${c === 'Overig' ? '' : `<button data-cdel="${esc(c)}" aria-label="Verwijder">🗑</button>`}</div>`).join('')}
+    <div class="mrow"><input id="newCat" placeholder="Nieuwe categorie"><button id="addCatBtn">Voeg toe</button></div>
+    <h3>Productdatabase</h3>
+    <p class="hint">Hier staat in welke categorie elk product thuishoort. Wijzigingen gelden direct voor al je lijsten.</p>
+    <div class="mrow"><input id="prodSearch" placeholder="Zoek product" value="${esc(prodQuery)}"></div>
+    <div id="prodList"></div>
+    <div class="mrow"><input id="newProd" placeholder="Nieuw product"><select id="newProdCat">${catOptions('Overig')}</select><button id="addProdBtn">Voeg toe</button></div>`;
+  renderProdList();
+}
+function renderProdList(){
+  const q = prodQuery.trim().toLowerCase();
+  const entries = Object.entries(S.products)
+    .filter(([k]) => !q || k.includes(q))
+    .sort((a, b) => a[0].localeCompare(b[0], 'nl'))
+    .slice(0, 300);
+  const box = document.getElementById('prodList');
+  if (!box) return;
+  box.innerHTML = entries.length
+    ? entries.map(([k, p]) => `<div class="mrow"><span class="pn">${esc(p.name)}</span><select data-pcat="${esc(k)}">${catOptions(p.cat)}</select><button data-pdel="${esc(k)}" aria-label="Verwijder">×</button></div>`).join('')
+    : '<p class="hint">Geen producten gevonden.</p>';
+}
+
+// ---- Link en QR: de lijst zit in de link zelf (geen server nodig) ----
+// Let op: dit maakt een kopie. Latere wijzigingen zijn niet automatisch zichtbaar op de andere telefoon.
+function encodeList(L){
+  const open = L.items.filter(i => !i.done);
+  const payload = { v: 2, n: L.name, i: open.map(it => [it.name, it.cat]) };
+  const bytes = new TextEncoder().encode(JSON.stringify(payload));
+  let bin = ''; bytes.forEach(b => bin += String.fromCharCode(b));
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function decodeList(s){
+  let b64 = s.replace(/-/g, '+').replace(/_/g, '/');
+  while (b64.length % 4) b64 += '=';
+  const bin = atob(b64);
+  const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+function shareLink(L){
+  return location.href.split('#')[0] + '#l=' + encodeList(L);
+}
+
+function openShare(){
+  const L = cur();
+  if (!L.items.some(i => !i.done)) return alert('Lijst is leeg.');
+  const link = shareLink(L);
+  const qrEl = document.getElementById('qr');
+  const warn = document.getElementById('qrWarn');
+  qrEl.innerHTML = '';
+  warn.textContent = '';
+  document.getElementById('linkBox').value = link;
+  if (link.length > 1800){
+    warn.textContent = 'Lijst is te groot voor een QR-code. Gebruik de link.';
+  } else {
+    try {
+      new QRCode(qrEl, { text: link, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.L });
+    } catch(e){
+      warn.textContent = 'QR kon niet worden gemaakt. Gebruik de link.';
+    }
+  }
+  document.getElementById('modal').hidden = false;
+}
+
+// Ontvangen: opent de app met een link die een lijst bevat
+function receiveFromHash(){
+  const m = location.hash.match(/^#l=(.+)$/);
+  if (!m) return;
+  history.replaceState(null, '', location.href.split('#')[0]);
+  let data;
+  try { data = decodeList(m[1]); } catch(e){ return alert('Deze link is ongeldig.'); }
+  const items = (data.i || []).filter(x => Array.isArray(x) && typeof x[0] === 'string' && x[0].trim());
+  if (!items.length) return;
+  const L = cur();
+  if (!confirm(`Je hebt een boodschappenlijst ontvangen met ${items.length} artikelen. Toevoegen aan "${L.name}"?`)) return;
+  for (const [name, c] of items){
+    const n = name.trim();
+    const cat = S.categories.includes(c) ? c : guess(n);
+    if (!L.items.some(i => keyOf(i.name) === keyOf(n) && !i.done)){
+      L.items.push({ id: newId(), name: n, cat, done: false });
+    }
+    if (!S.products[keyOf(n)]) S.products[keyOf(n)] = { name: n, cat };
+  }
+  save();
+}
+
+function shareText(L){
+  const open = routeSorted(L).filter(i => !i.done);
+  let out = '', last = null;
+  for (const it of open){
+    if (it.cat !== last){ out += `\n${it.cat}\n`; last = it.cat; }
+    out += `- ${it.name}\n`;
+  }
+  return out.trim() || 'Lijst is leeg';
+}
+async function share(){
+  const L = cur();
+  const text = `${L.name}:\n` + shareText(L);
+  if (navigator.share){
+    try { await navigator.share({ title: L.name, text }); } catch(e){}
+  } else if (navigator.clipboard){
+    await navigator.clipboard.writeText(text);
+    alert('Lijst gekopieerd. Plak hem in een appje.');
+  } else {
+    prompt('Kopieer de lijst:', text);
+  }
+}
+
+function exportData(){
+  const blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'boodschappen-' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+function importData(file){
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const n = normalize(JSON.parse(reader.result));
+      if (!n) throw new Error();
+      S = fix(n);
+      save(); render();
+      alert('Import gelukt.');
+    } catch(e){ alert('Dit bestand past niet bij deze app.'); }
+  };
+  reader.readAsText(file);
+}
+
+// ---- Init ----
+const catSel = document.getElementById('cat');
+document.getElementById('name').addEventListener('input', e => {
+  catSel.value = guess(e.target.value);
+});
+document.getElementById('name').addEventListener('keydown', e => { if (e.key === 'Enter') addItem(); });
+document.getElementById('addBtn').onclick = addItem;
+document.getElementById('doneBtn').onclick = finishTrip;
+document.getElementById('shareBtn').onclick = share;
+document.getElementById('qrBtn').onclick = openShare;
+document.getElementById('exportBtn').onclick = exportData;
+document.getElementById('importBtn').onclick = () => document.getElementById('file').click();
+document.getElementById('file').onchange = e => { if (e.target.files[0]) importData(e.target.files[0]); e.target.value = ''; };
+document.getElementById('newListBtn').onclick = newList;
+document.getElementById('delListBtn').onclick = deleteList;
+document.getElementById('mgrBtn').onclick = openMgr;
+document.getElementById('mgrClose').onclick = () => { document.getElementById('mgr').hidden = true; render(); };
+document.getElementById('listSel').onchange = e => { S.active = e.target.value; boughtOpen = true; save(); render(); };
+document.getElementById('closeModal').onclick = () => { document.getElementById('modal').hidden = true; };
+document.getElementById('modal').addEventListener('click', e => { if (e.target.id === 'modal') e.target.hidden = true; });
+document.getElementById('copyLink').onclick = () => {
+  const link = document.getElementById('linkBox').value;
+  if (navigator.clipboard){
+    navigator.clipboard.writeText(link).then(() => alert('Link gekopieerd.'), () => { document.getElementById('linkBox').select(); });
+  } else {
+    document.getElementById('linkBox').select();
+  }
+};
+document.getElementById('nativeShare').onclick = async () => {
+  const link = document.getElementById('linkBox').value;
+  if (navigator.share){
+    try { await navigator.share({ title: 'Boodschappen', text: 'Mijn boodschappenlijst', url: link }); } catch(e){}
+  } else {
+    document.getElementById('linkBox').select();
+  }
+};
+
+document.getElementById('list').addEventListener('change', e => {
+  if (e.target.dataset.id) toggle(e.target.dataset.id);
+  if (e.target.dataset.cid){
+    const it = cur().items.find(i => i.id === e.target.dataset.cid);
+    if (it){ setProduct(it.name, e.target.value); save(); render(); }
+  }
+});
+document.getElementById('list').addEventListener('click', e => {
+  if (e.target.dataset.dir){ moveCat(e.target.dataset.cat, Number(e.target.dataset.dir)); return; }
+  const id = e.target.dataset.del;
+  if (id){
+    const L = cur();
+    const it = L.items.find(i => i.id === id);
+    if (it) L.seq = L.seq.filter(x => x.k !== keyOf(it.name));
+    L.items = L.items.filter(i => i.id !== id);
+    save(); render();
+  }
+});
+
+const mgrBody = document.getElementById('mgrBody');
+mgrBody.addEventListener('click', e => {
+  const t = e.target;
+  if (t.dataset.ren){
+    const n = prompt('Nieuwe naam voor de categorie:', t.dataset.ren);
+    if (!n || !n.trim() || n.trim() === t.dataset.ren) return;
+    if (S.categories.some(c => c.toLowerCase() === n.trim().toLowerCase())) return alert('Die categorie bestaat al.');
+    renameCat(t.dataset.ren, n.trim()); save(); render(); renderMgr();
+  } else if (t.dataset.cdel){
+    const c = t.dataset.cdel;
+    if (!confirm(`Categorie "${c}" verwijderen? Artikelen en producten in deze categorie gaan naar Overig.`)) return;
+    deleteCat(c); save(); render(); renderMgr();
+  } else if (t.id === 'addCatBtn'){
+    const n = document.getElementById('newCat').value.trim();
+    if (!n) return;
+    if (S.categories.some(c => c.toLowerCase() === n.toLowerCase())) return alert('Die categorie bestaat al.');
+    S.categories.push(n); save(); render(); renderMgr();
+  } else if (t.dataset.pdel){
+    delete S.products[t.dataset.pdel]; save(); renderProdList();
+  } else if (t.id === 'addProdBtn'){
+    const n = document.getElementById('newProd').value.trim();
+    if (!n) return;
+    setProduct(n, document.getElementById('newProdCat').value);
+    save(); document.getElementById('newProd').value = ''; renderProdList();
+  }
+});
+mgrBody.addEventListener('change', e => {
+  if (e.target.dataset.pcat){ setProductKey(e.target.dataset.pcat, e.target.value); save(); }
+});
+mgrBody.addEventListener('input', e => {
+  if (e.target.id === 'prodSearch'){ prodQuery = e.target.value; renderProdList(); }
+});
+
+receiveFromHash();
+render();
+</script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js'));}</script>
+</body>
+</html>
